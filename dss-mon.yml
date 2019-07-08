@@ -1,0 +1,21 @@
+swagger: "2.0"
+
+info:
+  version: 1.0.0
+  title: Simple API
+  description: A simple API to learn how to write OpenAPI Specification
+
+schemes:
+  - https
+
+paths:
+  /notification:
+    post:
+      summary: "used as notification callback url"
+      description: "Endpoint used to subscribe to events from the [data-store](https://github.com/HumanCellAtlas/data-store), events are parsed and ingested into metrics"
+      responses:
+        200:
+          description: "notification was successful"
+        400:
+          description: "bad request"
+

@@ -1,0 +1,23 @@
+# Resolve the location of this file and set DSS_HOME to the root
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
+export DSS_MON_HOME="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+
+
+set -a
+
+AWS_DEFAULT_OUTPUT=json
+AWS_DEFAULT_REGION=us-east-1
+DSS_DEPLOYMENT_STAGES="prod"
+DSS_MONITOR_EVENT_BUCKET=dss-monitor-event-bucket-prod
+DSS_INFRA_TAG_PROJECT=dcp
+DSS_INFRA_TAG_STAGE=prod # this is only used for resource tagging
+DSS_INFRA_TAG_SERVICE=dss
+DSS_INFRA_TAG_OWNER=dss-team@data.humancellatlas.org
+DSS_MONITOR_WEBHOOK_SECRET_NAME=monitor-webhook
+DSS_MON_GCP_SERVICE_ACCOUNT_NAME=dss-monitor-prod
+
+
+
+AWS_SDK_LOAD_CONFIG=1 # Needed for Terraform to correctly use AWS assumed roles
+set +a
