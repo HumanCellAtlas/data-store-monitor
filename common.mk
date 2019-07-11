@@ -1,8 +1,13 @@
 SHELL=/bin/bash
 
 
+
 ifndef DSS_MON_HOME
 $(error Please run "source environment" in the data-store repo root directory before running make commands)
+endif
+
+ifeq (,$(wildcard ${DSS_MON_HOME}/deployments/${DSS_INFRA_TAG_STAGE}/gcp-credentials.json))
+$(error Missing GOOGLE_APPLICATION_CREDENTIALS from deployments folder)
 endif
 
 ifeq ($(shell which jq),)
