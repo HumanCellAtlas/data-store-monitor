@@ -1,6 +1,6 @@
-#  
+#  data-store-monitor
 
- is a monitoring plugin for the [DataStore](https://github.com/HumanCellAtlas/data-store)
+This is a monitoring plugin for the [DataStore](https://github.com/HumanCellAtlas/data-store)
 
 ## DSS-Authentication:
 Due to the DSS requiring authentication for the /Subscription endpoint we must create a service account with GCP
