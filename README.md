@@ -1,6 +1,6 @@
-# SightGlass
+#  
 
-SightGlass is a monitoring plugin for the [DataStore](https://github.com/HumanCellAtlas/data-store)
+ is a monitoring plugin for the [DataStore](https://github.com/HumanCellAtlas/data-store)
 
 ## DSS-Authentication:
 Due to the DSS requiring authentication for the /Subscription endpoint we must create a service account with GCP
@@ -17,7 +17,7 @@ gcloud iam service-accounts keys create ${DSS_MON_HOME}/deployments/${DSS_INFRA_
 Stage configuration files are stored in the (deployments)[deployments] directory.
 This includes a config file for the HCA tool, as well as the location to save the `gcp_credentials.json` for the applicable
 service account. 
-To deploy a different stage, perform:
+To work a different stage, perform:
 ``` export DEPLOYMENT={STAGE} && source environment```
 
 ## Secrets:
@@ -26,3 +26,9 @@ To deploy a different stage, perform:
 The DSS-Monitor can provide notifications for daily progress in a slack channel. Add a webhook url as follows
 	`echo 'URL' | scripts/set_secret.py --secret-name $DSS_MONITOR_WEBHOOK_SECRET_NAME` 
 	
+## Deployments:
+
+Once the appropriate service account config file has been saved according the instructions above, and there has been a
+webhook placed into the secrete manager, perform:
+`make DEPLOYMENT={STAGE} deploy`
+to deploy the lambdas, and subscribe to the appropriate notifications in the DSS.

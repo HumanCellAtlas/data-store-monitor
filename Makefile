@@ -5,12 +5,18 @@ api_gateway_id:=$(shell aws apigateway get-rest-apis | jq -r '.items[] | select(
 api_gateway_url:=https://$(api_gateway_id).execute-api.${AWS_DEFAULT_REGION}.amazonaws.com/${DSS_INFRA_TAG_STAGE}/notifications
 subscriptions:=$(shell hca dss get-subscriptions --replica aws | jq -r '.subscriptions[] | .uuid ')
 
+get-url:
+	echo $(api_gateway_url)
+json:
+	python $(DSS_MON_HOME)/monitor/__init__.py
 
 deploy: deploy-chalice delete-subscriptions create-all-subscriptions
 
 deploy-chalice:
 	source environment && \
 	$(MAKE) -C chalice deploy
+
+refresh-subscriptions: delete-subscriptions create-all-subscriptions
 
 delete-subscriptions:
 	source environment && \

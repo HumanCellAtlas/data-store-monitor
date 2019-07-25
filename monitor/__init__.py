@@ -26,7 +26,7 @@ def get_webhook_ssm(secret_name=None):
     return res['SecretString']
 
 
-def get_resource_by_tag(resource_string: str, tag_filter: list):
+def get_dss_resource(resource_string: str, tag_filter: list):
     dss_resources = resourcegroupstaggingapi.get_resources(ResourceTypeFilters=[resource_string],
                                                            TagFilters=tag_filter)
     return dss_resources
@@ -37,7 +37,7 @@ def get_lambda_names(stage=None):
     if stage is None:
         stage = os.getenv('DSS_INFRA_TAG_STAGE')
     service_tags = [{"Key": "service", "Values": ["dss"]}, {"Key": "env", "Values": [stage]}]
-    resource_list = get_resource_by_tag(resource_string='lambda:function', tag_filter=service_tags)
+    resource_list = get_dss_resource(resource_string='lambda:function', tag_filter=service_tags)
     lambda_names = [x['ResourceARN'].rsplit(':', 1)[1] for x in resource_list['ResourceTagMappingList'] if
                   stage in x['ResourceARN']]
     return sorted(lambda_names)
@@ -106,7 +106,7 @@ def send_slack_post(start_time, end_time, webhook: str, stages: dict):
 
 
 def format_data_size(value: int):
-    base = 1000
+    base = 1024
     value = float(value)
     suffix = ('kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB')
     if value < base:
@@ -125,12 +125,13 @@ def search_cloudwatch_dates(start_time: datetime, end_time: datetime, group_name
     log_stream_lookup.append(f"{(end_time - datetime.timedelta(days=1)).strftime('%Y/%m/%d')}/")
     events = list()
     for logs_stream_prefix in log_stream_lookup:
-        events.extend(get_cloudwatch_log_events(start_time, end_time, group_name, filter_pattern, logs_stream_prefix))
+        new_events = get_cloudwatch_log_events(start_time, end_time, group_name, filter_pattern, logs_stream_prefix)
+        events.extend(new_events)
     return events
 
 
 def get_cloudwatch_log_events(start_time: datetime, end_time: datetime, group_name: str, filter_pattern: str,
-                              log_stream: str):
+                              log_stream_prefix: str):
         paginator = logsmanager.get_paginator('filter_log_events')
         epoch = datetime.datetime.utcfromtimestamp(0)
         events = []
@@ -138,7 +139,7 @@ def get_cloudwatch_log_events(start_time: datetime, end_time: datetime, group_na
         kwargs = {'endTime': int((end_time - epoch).total_seconds()*1000),
                   'startTime': int((start_time - epoch).total_seconds()*1000),
                   'logGroupName': group_name, 'filterPattern': filter_pattern, 'interleaved': True,
-                  'logStreamNamePrefix': log_stream}
+                  'logStreamNamePrefix': log_stream_prefix}
         for page in paginator.paginate(**kwargs):
             if len(page["events"]) > 0:
                 for x in page["events"]:
