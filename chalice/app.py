@@ -4,6 +4,7 @@ import os
 import sys
 import json
 
+from flask import jsonify
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), 'chalicelib'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
@@ -20,10 +21,19 @@ app.log.setLevel(logging.DEBUG)
 
 @app.route('/', methods=['GET'])
 def index():
-    logger.info(dict(status='ok'))
-    return chalice.Response(body='ok',
+    logger.info(dict(status='OK'))
+    return chalice.Response(body='OK',
                             headers={"Content-Type": "text/plain"},
                             status_code=200)
+
+
+@app.route('/search', methods=['POST'])
+def search():
+    return jsonify(['bundles', 'buckets'])
+
+@app.route('/query', methods=['POST'])
+def query():
+    req = app.current_request
 
 
 @app.route('/notifications', methods=['POST'])
