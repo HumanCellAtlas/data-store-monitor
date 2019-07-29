@@ -5,3 +5,4 @@ requests
 hca
 google-cloud-storage
 domovoi
+dcplib

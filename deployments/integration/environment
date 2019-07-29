@@ -18,7 +18,6 @@ DSS_MON_GCP_SERVICE_ACCOUNT_NAME=dss-monitor-${DSS_INFRA_TAG_STAGE}
 HCA_CONFIG_FILE=${DSS_MON_HOME}/deployments/${DSS_INFRA_TAG_STAGE}/config.json
 GOOGLE_APPLICATION_CREDENTIALS=${DSS_MON_HOME}/deployments/${DSS_INFRA_TAG_STAGE}/gcp-credentials.json
 DSS_MON_TERRAFORM_BACKEND_BUCKET_TEMPLATE="org-humancellatlas-dss-{account_id}-${DSS_INFRA_TAG_STAGE}-terraform"
-
 DSS_S3_BUCKET=org-humancellatlas-dss-integration
 DSS_S3_CHECKOUT_BUCKET=org-humancellatlas-dss-checkout-integration
 

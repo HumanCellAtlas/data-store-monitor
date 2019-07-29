@@ -6,14 +6,9 @@ import datetime
 import json
 import requests
 import collections
-
+from dcplib.aws.clients import cloudwatch, resourcegroupstaggingapi, secretsmanager, logs # typing: ignore
 
 chalice_app_name = os.getenv("CHALICE_APP_NAME")
-
-cloudwatch = boto3.client('cloudwatch')
-resourcegroupstaggingapi = boto3.client('resourcegroupstaggingapi')
-secretsmanager = boto3.client('secretsmanager')
-logsmanager = boto3.client('logs')
 
 def get_webhook_ssm(secret_name=None):
     #  fetch webhook url from Secrets Store.
@@ -39,7 +34,7 @@ def get_lambda_names(stage=None):
     service_tags = [{"Key": "service", "Values": ["dss"]}, {"Key": "env", "Values": [stage]}]
     resource_list = get_dss_resource(resource_string='lambda:function', tag_filter=service_tags)
     lambda_names = [x['ResourceARN'].rsplit(':', 1)[1] for x in resource_list['ResourceTagMappingList'] if
-                  stage in x['ResourceARN']]
+                    stage in x['ResourceARN']]
     return sorted(lambda_names)
 
 
@@ -48,7 +43,7 @@ def get_cloudwatch_metric_stat(start_time: datetime, end_time: datetime, namespa
     #  Returns a formatted MetricDataQuery that can be used with CloudWatch Metrics
     end_time = end_time
     start_time = start_time
-    period = 43200
+    period = 12 * 60 * 60  # 12 hours
     if not stats:
         stats = ['Sum']
     return {"Namespace": namespace,
@@ -62,12 +57,7 @@ def get_cloudwatch_metric_stat(start_time: datetime, end_time: datetime, namespa
 
 def summation_from_datapoints_response(response):
     # Datapoints from CloudWatch queries may need to be summed due to how durations for time delta's are calculated.
-    temp_sum = 0.0
-    if len(response['Datapoints']) is not 0:
-        for x in response['Datapoints']:
-            temp_sum += x['Sum']
-        return temp_sum
-    return 0.0
+    return sum([x['Sum'] for x in response['Datapoints']])
 
 
 def format_lambda_results_for_slack(start_time: datetime, end_time: datetime, results: dict):
@@ -132,7 +122,7 @@ def search_cloudwatch_dates(start_time: datetime, end_time: datetime, group_name
 
 def get_cloudwatch_log_events(start_time: datetime, end_time: datetime, group_name: str, filter_pattern: str,
                               log_stream_prefix: str):
-        paginator = logsmanager.get_paginator('filter_log_events')
+        paginator = logs.get_paginator('filter_log_events')
         epoch = datetime.datetime.utcfromtimestamp(0)
         events = []
 

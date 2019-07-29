@@ -41,3 +41,9 @@ request-create-subscription:
 list-subscriptions:
 	source environment && \
 	hca dss get-subscriptions --replica aws
+
+infra-plan-all:
+	$(MAKE) -C infra plan-all
+
+infra-apply-all:
+	$(MAKE) -C infra apply-all

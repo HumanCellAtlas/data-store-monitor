@@ -43,6 +43,6 @@ AWS_SDK_LOAD_CONFIG=1 # Needed for Terraform to correctly use AWS assumed roles
 set +a
 
 
-if [[ -f "${DSS_MON_HOME}/deployments/${DSS_INFRA_TAG_STAGE}/environment.local" ]]; then
-    source "${DSS_MON_HOME}/deployments/${DSS_INFRA_TAG_STAGE}/environment.local"
+if [[ -f "${DSS_MON_HOME}/deployments/${DSS_INFRA_TAG_STAGE}/environment" ]]; then
+    source "${DSS_MON_HOME}/deployments/${DSS_INFRA_TAG_STAGE}/environment"
 fi
