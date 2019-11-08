@@ -21,6 +21,7 @@ gcloud iam service-accounts keys create ${DSS_MON_HOME}/deployments/${DSS_INFRA_
 
 In order to ensure authenticity of notifications, and hmac key is used during the subscription process.
 Set a hmac key for as follows:
+
 	openssl rand -base64 12 | scripts/set_secret.py --secret-name $DSS_MON_HMAC_SECRET_NAME
 
 ### Webhook
