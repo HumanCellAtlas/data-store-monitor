@@ -5,10 +5,10 @@ export DSS_MON_HOME="$(cd -P "$(dirname "$SOURCE")" && pwd)"
 
 
 if [[ -z "${DEPLOYMENT}" ]]; then
-    export DSS_INFRA_TAG_STAGE=dev
+    export DSS_DEPLOYMENT_STAGE=dev
 else
     # Used for deploying different stages from make files
-    export DSS_INFRA_TAG_STAGE=${DEPLOYMENT}
+    export DSS_DEPLOYMENT_STAGE=${DEPLOYMENT}
 fi
 
 
@@ -30,29 +30,29 @@ GCP_PROJECT_NAME=human-cell-atlas-travis-test
 GCP_DEFAULT_REGION=us-central1
 
 DSS_INFRA_TAG_PROJECT=dcp
-
 DSS_INFRA_TAG_SERVICE=dss
 DSS_INFRA_TAG_OWNER=dss-team@data.humancellatlas.org
+DSS_INFRA_TAG_STAGE=$(DSS_DEPLOYMENT_STAGE}
 
 DSS_MON_HMAC_SECRET_NAME=hmac-sub
 DSS_MON_PARAMETER_STORE="dcp/dss/plugins"
 DSS_MON_SECRETS_STORE="dcp/dss/plugins"
 DSS_MON_WEBHOOK_SECRET_NAME=monitor-webhook
-DSS_MON_GCP_SERVICE_ACCOUNT_NAME=dss-monitor-${DSS_INFRA_TAG_STAGE}
-DSS_MON_TERRAFORM_BACKEND_BUCKET_TEMPLATE="org-humancellatlas-dss-{account_id}-${DSS_INFRA_TAG_STAGE}-terraform"
+DSS_MON_GCP_SERVICE_ACCOUNT_NAME=dss-monitor-${DSS_DEPLOYMENT_STAGE}
+DSS_MON_TERRAFORM_BACKEND_BUCKET_TEMPLATE="org-humancellatlas-dss-{account_id}-${DSS_DEPLOYMENT_STAGE}-terraform"
 
 DSS_S3_BUCKET=org-humancellatlas-dss-dev
 DSS_S3_CHECKOUT_BUCKET=org-humancellatlas-dss-checkout-dev
 
 CHALICE_APP_NAME=dss-monitor
-HCA_CONFIG_FILE=${DSS_MON_HOME}/deployments/${DSS_INFRA_TAG_STAGE}/config.json
-GOOGLE_APPLICATION_CREDENTIALS=${DSS_MON_HOME}/deployments/${DSS_INFRA_TAG_STAGE}/gcp-credentials.json
+HCA_CONFIG_FILE=${DSS_MON_HOME}/cli_config/${DSS_DEPLOYMENT_STAGE}/config.json
+GOOGLE_APPLICATION_CREDENTIALS=${DSS_MON_HOME}/cli_config/gcp-credentials.json
 
 
 AWS_SDK_LOAD_CONFIG=1 # Needed for Terraform to correctly use AWS assumed roles
 set +a
 
 
-if [[ -f "${DSS_MON_HOME}/deployments/${DSS_INFRA_TAG_STAGE}/environment" ]]; then
-    source "${DSS_MON_HOME}/deployments/${DSS_INFRA_TAG_STAGE}/environment"
+if [[ -f "${DSS_MON_HOME}/deployments/${DSS_DEPLOYMENT_STAGE}/environment" ]]; then
+    source "${DSS_MON_HOME}/deployments/${DSS_DEPLOYMENT_STAGE}/environment"
 fi
