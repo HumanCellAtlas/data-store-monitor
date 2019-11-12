@@ -1,8 +1,13 @@
 SHELL=/bin/bash
 
 
+
 ifndef DSS_MON_HOME
 $(error Please run "source environment" in the data-store repo root directory before running make commands)
+endif
+
+ifeq (,$(wildcard ${DSS_MON_HOME}/gcp-credentials.json))
+$(error Missing GOOGLE_APPLICATION_CREDENTIALS from deployments folder)
 endif
 
 ifeq ($(shell which jq),)
@@ -17,6 +22,3 @@ ifeq ($(shell which envsubst),)
 $(error Please install envsubst using "apt-get install gettext" or "brew install gettext; brew link gettext")
 endif
 
-ifeq ($(findstring Python 3.6, $(shell python --version 2>&1)),)
-$(error Please run make commands from a Python 3.6 virtualenv)
-endif

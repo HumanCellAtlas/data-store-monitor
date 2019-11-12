@@ -11,7 +11,8 @@
       "Effect": "Allow",
       "Action": "logs:*",
       "Resource": [
-        "arn:aws:logs:*:$account_id:log-group:dss-*-*"
+        "arn:aws:logs:*:$account_id:log-group:dss-*-*",
+        "arn:aws:logs:*:*:*"
       ]
     },
     {
@@ -30,7 +31,7 @@
     {
       "Effect": "Allow",
       "Action": "secretsmanager:Get*",
-      "Resource": "arn:aws:secretsmanager:*:${data.aws_caller_identity.current.account_id}:secret:${var.DSS_SECRETS_STORE}/*"
+      "Resource": "arn:aws:secretsmanager:*:$account_id:secret:$DSS_MON_SECRETS_STORE/*"
     },
     {
       "Effect": "Allow",

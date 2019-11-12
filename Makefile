@@ -1,33 +1,39 @@
 include common.mk
 
+STAGE=${DSS_DEPLOYMENT_STAGE}
 
-# api_gateway_id:=aws apigateway get-rest-apis | jq -r '.items[] | select(.name=="${DSS_MON_API_GATEWAY_NAME}") | .id'
-api_gateway_id:=$(shell aws apigateway get-rest-apis | jq -r '.items[] | select(.name=="azul-service-hannes") | .id')
-api_gateway_url:=https://$(api_gateway_id).execute-api.${AWS_DEFAULT_REGION}.amazonaws.com/${DSS_INFRA_TAG_STAGE}
-subscriptions:=$(shell hca dss get-subscriptions --replica aws | jq -r '.subscriptions[] | .uuid ')
-
-echo:
-	echo $(subscriptions)
-
+json:
+	python $(DSS_MON_HOME)/monitor/__init__.py
 
 deploy-chalice:
+	source environment && \
 	$(MAKE) -C chalice deploy
-	delete-subscriptions
-	create-all-subscriptions
 
-delete-subscriptions:
-	for uuid in $(subscriptions) ; do \
-		hca dss delete-subscription --uuid $$uuid --replica aws ; \
-	done
+infra-plan-all:
+	$(MAKE) -C infra plan-all
 
-create-all-subscriptions: request-tombstone-subscription request-delete-subscription request-create-subscription
+infra-apply-all:
+	$(MAKE) -C infra apply-all
 
-request-tombstone-subscription:
-	hca dss put-subscription --replica aws --callback-url $(api_gateway_url) --jmespath-query "event_type=='TOMBSTONE'"
+list-subs:
+	./scripts/subscription_manager.py --list --replica aws --stage $(STAGE)
+	./scripts/subscription_manager.py --list --replica gcp --stage $(STAGE)
 
-request-delete-subscription:
-	hca dss put-subscription --replica aws --callback-url $(api_gateway_url) --jmespath-query "event_type=='DELETE'"
+refresh-subs:
+	./scripts/subscription_manager.py --resubscribe --replica aws --stage $(STAGE)
+	./scripts/subscription_manager.py --resubscribe --replica gcp --stage $(STAGE)
 
-request-create-subscription:
-	hca dss put-subscription --replica aws --callback-url $(api_gateway_url) --jmespath-query "event_type=='CREATE'"
+list-all-stages:
+	$(MAKE) list-subs STAGE=dev
+	$(MAKE) list-subs STAGE=integration
+	$(MAKE) list-subs STAGE=staging
+	$(MAKE) list-subs STAGE=prod
+
+refresh-all-stages:
+	$(MAKE) refresh-subs STAGE=dev
+	$(MAKE) refresh-subs STAGE=integration
+	$(MAKE) refresh-subs STAGE=staging
+	$(MAKE) refresh-subs STAGE=prod
+
+
 
