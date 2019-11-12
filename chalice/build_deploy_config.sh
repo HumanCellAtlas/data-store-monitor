@@ -2,12 +2,12 @@
 
 set -euo pipefail
 
-if [[ -z $DSS_INFRA_TAG_STAGE ]]; then
+if [[ -z $DSS_DEPLOYMENT_STAGE ]]; then
     echo 'Please run "source environment" in the data-store repo root directory before running this command'
     exit 1
 fi
 
-export stage=$DSS_INFRA_TAG_STAGE
+export stage=$DSS_DEPLOYMENT_STAGE
 export s3_bucket=$DSS_S3_BUCKET
 export s3_checkout_bucket=$DSS_S3_CHECKOUT_BUCKET
 export dss_mon_secrets_store=$DSS_MON_SECRETS_STORE
@@ -49,13 +49,10 @@ cat "$config_json" | jq ".stages.$stage.tags.DSS_DEPLOY_ORIGIN=\"$DEPLOY_ORIGIN\
 	.stages.$stage.tags.env=\"${DSS_INFRA_TAG_STAGE}\""  | sponge "$config_json"
 
 
-export env_webhook=$(aws secretsmanager get-secret-value --secret-id ${DSS_MON_PARAMETER_STORE}/${DSS_INFRA_TAG_STAGE}/${DSS_MON_WEBHOOK_SECRET_NAME} | jq -r '.SecretString' )
-cat "$config_json" | jq .stages.$stage.environment_variables.DSS_MONITOR_WEBHOOK_SECRET_NAME=\"$env_webhook\" | sponge "$config_json"
-cat "$config_json" | jq .stages.$stage.environment_variables.DSS_INFRA_TAG_STAGE=\"$stage\" | sponge "$config_json"
-cat "$config_json" | jq .stages.$stage.environment_variables.DSS_S3_BUCKET=\"$s3_bucket\" | sponge "$config_json"
-cat "$config_json" | jq .stages.$stage.environment_variables.DSS_S3_CHECKOUT_BUCKET=\"$s3_checkout_bucket\" | sponge "$config_json"
-cat "$config_json" | jq .stages.$stage.environment_variables.CHALICE_APP_NAME=\"$lambda_name\" | sponge "$config_json"
-cat "$config_json" | jq .stages.$stage.environment_variables.DSS_MON_SECRETS_STORE=\"$dss_mon_secrets_store\" | sponge "$config_json"
+for ENV_KEY in $EXPORT_ENV_VARS_TO_LAMBDA; do
+	export env_val=$(printenv $ENV_KEY)
+	cat "$config_json" | jq ".stages.$stage.environment_variables.$ENV_KEY=\"$env_val\"" |  sponge "$config_json"
+done
 
 if [[ ${CI:-} == true ]]; then
     account_id=$(aws sts get-caller-identity | jq -r .Account)

@@ -1,46 +1,39 @@
 include common.mk
 
+STAGE=${DSS_DEPLOYMENT_STAGE}
 
-api_gateway_id:=$(shell aws apigateway get-rest-apis | jq -r '.items[] | select(.name=="${CHALICE_APP_NAME}-${DSS_INFRA_TAG_STAGE}") | .id')
-api_gateway_url:=https://$(api_gateway_id).execute-api.${AWS_DEFAULT_REGION}.amazonaws.com/${DSS_INFRA_TAG_STAGE}/notifications
-subscriptions:=$(shell hca dss get-subscriptions --replica aws | jq -r '.subscriptions[] | .uuid ')
-
-get-url:
-	echo $(api_gateway_url)
 json:
 	python $(DSS_MON_HOME)/monitor/__init__.py
-
-deploy: deploy-chalice delete-subscriptions create-all-subscriptions
 
 deploy-chalice:
 	source environment && \
 	$(MAKE) -C chalice deploy
 
-refresh-subscriptions: delete-subscriptions create-all-subscriptions
+infra-plan-all:
+	$(MAKE) -C infra plan-all
 
-delete-subscriptions:
-	source environment && \
-	for uuid in $(subscriptions) ; do \
-		hca dss delete-subscription --uuid $$uuid --replica aws ; \
-	done
+infra-apply-all:
+	$(MAKE) -C infra apply-all
 
-create-all-subscriptions: request-tombstone-subscription request-delete-subscription request-create-subscription
+list-subs:
+	./scripts/subscription_manager.py --list --replica aws --stage $(STAGE)
+	./scripts/subscription_manager.py --list --replica gcp --stage $(STAGE)
 
-request-tombstone-subscription:
-	source environment && \
-	hca dss put-subscription --replica aws --callback-url $(api_gateway_url) --jmespath-query "event_type=='TOMBSTONE'"
+refresh-subs:
+	./scripts/subscription_manager.py --resubscribe --replica aws --stage $(STAGE)
+	./scripts/subscription_manager.py --resubscribe --replica gcp --stage $(STAGE)
 
-request-delete-subscription:
-	source environment && \
-	hca dss put-subscription --replica aws --callback-url $(api_gateway_url) --jmespath-query "event_type=='DELETE'"
+list-all-stages:
+	$(MAKE) list-subs STAGE=dev
+	$(MAKE) list-subs STAGE=integration
+	$(MAKE) list-subs STAGE=staging
+	$(MAKE) list-subs STAGE=prod
 
-request-create-subscription:
-	source environment && \
-	hca dss put-subscription --replica aws --callback-url $(api_gateway_url) --jmespath-query "event_type=='CREATE'"
-
-list-subscriptions:
-	source environment && \
-	hca dss get-subscriptions --replica aws
+refresh-all-stages:
+	$(MAKE) refresh-subs STAGE=dev
+	$(MAKE) refresh-subs STAGE=integration
+	$(MAKE) refresh-subs STAGE=staging
+	$(MAKE) refresh-subs STAGE=prod
 
 list-lambdas:
 	 python -c 'import monitor; import json;  print(json.dumps(monitor.get_lambda_names()))'

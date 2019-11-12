@@ -2,23 +2,27 @@
 
 This is a monitoring plugin for the [DataStore](https://github.com/HumanCellAtlas/data-store)
 
-## DSS-Authentication:
-Due to the DSS requiring authentication for the /Subscription endpoint we must create a service account with GCP
-that will be utilized for the hca cli tool login.
-The service account is created for you, see [infra/google-account](infra/google-account) for more information
-Once the service account is created head over to [gcp-dashboard](https://console.developers.google.com/) and get the
-`gcp_credentials.json` associated with the account created. 
+## Overview:
+The data-store-monitor plugin utilizes subscriptions to get bundle events notifications from the data-store.
+There is a singular aws-lambda function that serves as a backend for processing these events into cloudwatch metrics.
 
-```
-gcloud iam service-accounts keys create ${DSS_MON_HOME}/deployments/${DSS_INFRA_TAG_STAGE}/gcp-credentials.json --iam-account ${DSS_MON_GCP_SERVICE_ACCOUNT_NAME}@${GCP_PROJECT_NAME}.iam.gserviceaccount.com
-```
 
-## Stages:
-Stage configuration files are stored in the (deployments)[deployments] directory.
-This includes a config file for the HCA tool, as well as the location to save the `gcp_credentials.json` for the applicable
-service account. 
-To work a different stage, perform:
-``` export DEPLOYMENT={STAGE} && source environment```
+## Data-Store Authentication:
+The DSS Monitor Service Identity is provided by a GCP Service account. This service account is used to authenticate to the data-store, in order
+to perform actions on the /Subscriptions endpoint. One service-account can be used to create subscriptions on multiple stages. 
+To create a service account use the commands:
+```
+make infra-apply-all
+make infra-plan-all
+```
+Once the service account is created head over to [gcp-dashboard](https://console.developers.google.com/) and download the
+`gcp_credentials.json` associated with the account created, this file needs to be placed inside the `${DSS_MON_HOME}/deployments/` folder.
+Alternatively this short command can also be run:
+```
+source evironment
+gcloud iam service-accounts keys create ${DSS_MON_HOME}/gcp-credentials.json --iam-account ${DSS_MON_GCP_SERVICE_ACCOUNT_NAME}@${GCP_PROJECT_NAME}.iam.gserviceaccount.com
+```
+See [infra/google-account](infra/google-account) for more information
 
 ## Secrets:
 
