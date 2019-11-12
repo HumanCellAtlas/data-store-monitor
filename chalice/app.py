@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 stage = os.getenv('DSS_INFRA_TAG_STAGE')
-app = chalice.Chalice(app_name=f"dss-monitor-{stage}")
+app = chalice.Chalice(app_name=f"dss-monitor-dev")
 app.log.setLevel(logging.DEBUG)
 
 
@@ -26,16 +26,6 @@ def index():
                             headers={"Content-Type": "text/plain"},
                             status_code=200)
 
-
-@app.route('/search', methods=['POST'])
-def search():
-    return jsonify(['bundles', 'buckets'])
-
-@app.route('/query', methods=['POST'])
-def query():
-    req = app.current_request
-
-
 @app.route('/notifications', methods=['POST'])
 def notification():
     notification_event = app.current_request.json_body  # todo verify HMAC key
@@ -43,7 +33,6 @@ def notification():
     return chalice.Response(body='ok',
                             headers={"Content-Type": "text/plain"},
                             status_code=200)
-
 
 @app.schedule("cron(0 17 ? * MON-FRI *)")
 def daemon_run(event):
