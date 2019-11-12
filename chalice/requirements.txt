@@ -1,7 +1,0 @@
-chalice >= 1.9.0
-awscli
-boto3
-requests
-hca
-google-cloud-storage
-domovoi
