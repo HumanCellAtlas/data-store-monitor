@@ -4,17 +4,16 @@ import os
 import sys
 import json
 
-from flask import jsonify
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), 'chalicelib'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
 import monitor
+from monitor import events
 
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-stage = os.getenv('DSS_INFRA_TAG_STAGE')
 app = chalice.Chalice(app_name=f"dss-monitor-dev")
 app.log.setLevel(logging.DEBUG)
 
@@ -29,7 +28,10 @@ def index():
 @app.route('/notifications', methods=['POST'])
 def notification():
     notification_event = app.current_request.json_body  # todo verify HMAC key
+    stage = json.loads(notification_event).get('dss-api').split('.')[1]
     logger.info(json.dumps(dict(stage=stage, event=notification_event)))
+    event = events.aws_cloudwatch_metric(dss_notification=notification_event)
+    event.upload_to_cloudwatch()
     return chalice.Response(body='ok',
                             headers={"Content-Type": "text/plain"},
                             status_code=200)
