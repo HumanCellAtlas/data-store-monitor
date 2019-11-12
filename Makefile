@@ -2,12 +2,8 @@ include common.mk
 
 STAGE=${DSS_DEPLOYMENT_STAGE}
 
-get-url:
-	echo $(api_gateway_url)
 json:
 	python $(DSS_MON_HOME)/monitor/__init__.py
-
-deploy: deploy-chalice delete-subscriptions create-all-subscriptions
 
 deploy-chalice:
 	source environment && \
