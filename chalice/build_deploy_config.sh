@@ -2,12 +2,12 @@
 
 set -euo pipefail
 
-if [[ -z $DSS_INFRA_TAG_STAGE ]]; then
+if [[ -z $DSS_DEPLOYMENT_STAGE ]]; then
     echo 'Please run "source environment" in the data-store repo root directory before running this command'
     exit 1
 fi
 
-export  stage=$DSS_INFRA_TAG_STAGE
+export stage=$DSS_DEPLOYMENT_STAGE
 export s3_bucket=$DSS_S3_BUCKET
 export s3_checkout_bucket=$DSS_S3_CHECKOUT_BUCKET
 export dss_mon_secrets_store=$DSS_MON_SECRETS_STORE
