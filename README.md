@@ -20,7 +20,7 @@ Once the service account is created head over to [gcp-dashboard](https://console
 Alternatively this short command can also be run:
 ```
 source evironment
-gcloud iam service-accounts keys create ${DSS_MON_HOME}/deployments/gcp-credentials.json --iam-account ${DSS_MON_GCP_SERVICE_ACCOUNT_NAME}@${GCP_PROJECT_NAME}.iam.gserviceaccount.com
+gcloud iam service-accounts keys create ${DSS_MON_HOME}/gcp-credentials.json --iam-account ${DSS_MON_GCP_SERVICE_ACCOUNT_NAME}@${GCP_PROJECT_NAME}.iam.gserviceaccount.com
 ```
 See [infra/google-account](infra/google-account) for more information
 
