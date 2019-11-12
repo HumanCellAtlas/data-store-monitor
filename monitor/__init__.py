@@ -18,7 +18,7 @@ def get_webhook_ssm(secret_name=None):
     stage = os.environ['DSS_INFRA_TAG_STAGE']
     secrets_store = os.environ['DSS_MON_SECRETS_STORE']
     if secret_name is None:
-        secret_name = 'monitor-webhook'
+        secret_name = os.getenv('DSS_MON_WEBHOOK_SECRET_NAME')
     secret_id = f'{secrets_store}/{stage}/{secret_name}'
     res = secretsmanager.get_secret_value(SecretId=secret_id)
     return res['SecretString']

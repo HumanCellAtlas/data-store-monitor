@@ -34,6 +34,3 @@ refresh-all-stages:
 	$(MAKE) refresh-subs STAGE=integration
 	$(MAKE) refresh-subs STAGE=staging
 	$(MAKE) refresh-subs STAGE=prod
-
-list-lambdas:
-	 python -c 'import monitor; import json;  print(json.dumps(monitor.get_lambda_names()))'
