@@ -1,9 +1,6 @@
 include common.mk
 
-
-api_gateway_id:=$(shell aws apigateway get-rest-apis | jq -r '.items[] | select(.name=="${CHALICE_APP_NAME}-${DSS_INFRA_TAG_STAGE}") | .id')
-api_gateway_url:=https://$(api_gateway_id).execute-api.${AWS_DEFAULT_REGION}.amazonaws.com/${DSS_INFRA_TAG_STAGE}/notifications
-subscriptions:=$(shell hca dss get-subscriptions --replica aws | jq -r '.subscriptions[] | .uuid ')
+STAGE=${DSS_DEPLOYMENT_STAGE}
 
 get-url:
 	echo $(api_gateway_url)
@@ -16,34 +13,31 @@ deploy-chalice:
 	source environment && \
 	$(MAKE) -C chalice deploy
 
-refresh-subscriptions: delete-subscriptions create-all-subscriptions
-
-delete-subscriptions:
-	source environment && \
-	for uuid in $(subscriptions) ; do \
-		hca dss delete-subscription --uuid $$uuid --replica aws ; \
-	done
-
-create-all-subscriptions: request-tombstone-subscription request-delete-subscription request-create-subscription
-
-request-tombstone-subscription:
-	source environment && \
-	hca dss put-subscription --replica aws --callback-url $(api_gateway_url) --jmespath-query "event_type=='TOMBSTONE'"
-
-request-delete-subscription:
-	source environment && \
-	hca dss put-subscription --replica aws --callback-url $(api_gateway_url) --jmespath-query "event_type=='DELETE'"
-
-request-create-subscription:
-	source environment && \
-	hca dss put-subscription --replica aws --callback-url $(api_gateway_url) --jmespath-query "event_type=='CREATE'"
-
-list-subscriptions:
-	source environment && \
-	hca dss get-subscriptions --replica aws
-
 infra-plan-all:
 	$(MAKE) -C infra plan-all
 
 infra-apply-all:
 	$(MAKE) -C infra apply-all
+
+list-subs:
+	./scripts/subscription_manager.py --list --replica aws --stage $(STAGE)
+	./scripts/subscription_manager.py --list --replica gcp --stage $(STAGE)
+
+refresh-subs:
+	./scripts/subscription_manager.py --resubscribe --replica aws --stage $(STAGE)
+	./scripts/subscription_manager.py --resubscribe --replica gcp --stage $(STAGE)
+
+list-all-stages:
+	$(MAKE) list-subs STAGE=dev
+	$(MAKE) list-subs STAGE=integration
+	$(MAKE) list-subs STAGE=staging
+	$(MAKE) list-subs STAGE=prod
+
+refresh-all-stages:
+	$(MAKE) refresh-subs STAGE=dev
+	$(MAKE) refresh-subs STAGE=integration
+	$(MAKE) refresh-subs STAGE=staging
+	$(MAKE) refresh-subs STAGE=prod
+
+
+

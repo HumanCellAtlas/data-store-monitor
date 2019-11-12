@@ -38,10 +38,8 @@ parser.add_argument("--resubscribe", help="create all new subscriptions", action
 parser.add_argument("--stage",default=os.getenv('DSS_DEPLOYMENT_STAGE'),
                     choices=['dev','integration','staging','prod'],
                     help="pass stage for override, default to env",
-                    nargs=1,
                     type=str)
 parser.add_argument("--replica", help="specify replica",
-                    nargs=1,
                     choices=['aws','gcp'],
                     required=True,
                     type=str)
@@ -65,7 +63,7 @@ if api_data is not None:
         print(json.dumps(list_subscriptions(replica=args.replica),indent=4))
 
     elif args.resubscribe:
-        subscriptions = list_subscriptions(args.replica)
+        subscriptions = list_subscriptions(replica=args.replica)
         for sub in subscriptions:
             uuid = sub.get('uuid')
             print(delete_subscription(replica=args.replica, uuid=uuid))
