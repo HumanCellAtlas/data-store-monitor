@@ -24,8 +24,7 @@ def putMetrics(namespace: str = None, metric_name: str = None, timestamp=datetim
             "Unit": "Count"
         }]
     }
-    resp = cloudwatch.put_metric_data(**payload)
-    return resp
+    cloudwatch.put_metric_data(**payload)
 
 class aws_cloudwatch_metric:
     def __init__(self, dss_notification):
