@@ -3,6 +3,7 @@
 .chalice/policy.json
 .chalice/policy-*.json
 .chalice/venv/
+.chalice/
 chalicelib
 vendor
-requirements.txtgit
+requirements.txt

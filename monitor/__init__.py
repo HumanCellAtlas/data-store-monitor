@@ -6,7 +6,10 @@ import datetime
 import json
 import requests
 import collections
+
 from dcplib.aws.clients import cloudwatch, resourcegroupstaggingapi, secretsmanager, logs # typing: ignore
+from monitor.external_export import time_ms_after_epoch
+from monitor.external_export.slack import send_slack_post
 
 chalice_app_name = os.getenv("CHALICE_APP_NAME")
 
@@ -15,7 +18,7 @@ def get_webhook_ssm(secret_name=None):
     stage = os.environ['DSS_INFRA_TAG_STAGE']
     secrets_store = os.environ['DSS_MON_SECRETS_STORE']
     if secret_name is None:
-        secret_name = 'monitor-webhook'
+        secret_name = os.getenv('DSS_MON_WEBHOOK_SECRET_NAME')
     secret_id = f'{secrets_store}/{stage}/{secret_name}'
     res = secretsmanager.get_secret_value(SecretId=secret_id)
     return res['SecretString']
@@ -60,53 +63,6 @@ def summation_from_datapoints_response(response):
     return sum([x['Sum'] for x in response['Datapoints']])
 
 
-def format_lambda_results_for_slack(start_time: datetime, end_time: datetime, results: dict):
-    # Formats json lambda data into something that can be presented in slack
-    header = '\n {} : {} -> {} | \n  Lambda Name | Invocations | Duration (seconds) \n'
-    bucket_header = '\n Bucket | BytesUploaded | BytesDownloaded \n'
-    bundle_header = '\n Bundles | {} CREATE | {} TOMBSTONE | {} DELETE \n'
-    payload = []
-    for stage, infra in results.items():
-        temp_results_lambdas = [header.format(stage, start_time, end_time)]
-        temp_results_buckets = [bucket_header]
-        temp_results_bundles = []
-        for k, v in infra.items():
-            if 'lambdas' in k:
-                for ln, val in v.items():
-                    temp_results_lambdas.append(f'\n\t | {ln} | {val["Invocations"]} | {val["Duration"]/1000} ')
-            elif 'buckets' in k:
-                for bn, val in v.items():
-                    temp_results_buckets.append(f'\n\t | {bn} | {format_data_size(val["BytesUploaded"])}, | '
-                                                f'{format_data_size(val["BytesDownloaded"])}')
-            elif 'bundles' in k:
-                temp_results_bundles.append(bundle_header.format(v["CREATE"], v["TOMBSTONE"], v["DELETE"]))
-        payload.append(''.join(temp_results_lambdas+temp_results_buckets+temp_results_bundles))
-
-    return ''.join(payload)
-
-
-def send_slack_post(start_time, end_time, webhook: str, stages: dict):
-    payload = {"text": f"{format_lambda_results_for_slack(start_time, end_time, stages)}"}
-    res = requests.post(webhook, json=payload, headers={'Content-Type': 'application/json'})
-    if res.status_code != 200:
-        raise ValueError(
-            'Request to slack returned an error %s, the response is:\n%s'
-            % (res.status_code, res.text)
-        )
-
-
-def format_data_size(value: int):
-    base = 1024
-    value = float(value)
-    suffix = ('kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB')
-    if value < base:
-        return '%d Bytes' % value
-    for i, s in enumerate(suffix):
-        unit = base ** (i + 2)
-        if value < unit:
-            return f'{round((base * value / unit),2)} {s}'
-
-
 def search_cloudwatch_dates(start_time: datetime, end_time: datetime, group_name: str, filter_pattern: str):
     # this function is used to figure out what logstreams to look inside, if we dont do this, boto3 searches through all
     # log streams starting from the lambda initialization, this can lead to hitting limits for python recursion.
@@ -126,8 +82,8 @@ def get_cloudwatch_log_events(start_time: datetime, end_time: datetime, group_na
         epoch = datetime.datetime.utcfromtimestamp(0)
         events = []
 
-        kwargs = {'endTime': int((end_time - epoch).total_seconds()*1000),
-                  'startTime': int((start_time - epoch).total_seconds()*1000),
+        kwargs = {'endTime': time_ms_after_epoch(end_time),
+                  'startTime': time_ms_after_epoch(start_time),
                   'logGroupName': group_name, 'filterPattern': filter_pattern, 'interleaved': True,
                   'logStreamNamePrefix': log_stream_prefix}
         for page in paginator.paginate(**kwargs):
@@ -139,8 +95,21 @@ def get_cloudwatch_log_events(start_time: datetime, end_time: datetime, group_na
 
         return events
 
+def get_lambda_metrics(start_time:datetime, end_time:datetime, metric_names: list):
+    stage_lambdas = {i: collections.defaultdict(collections.defaultdict) for i in get_lambda_names()}
+    for ln in stage_lambdas.keys():
+        for lambda_metric in metric_names:
+            lambda_res = cloudwatch.get_metric_statistics(**get_cloudwatch_metric_stat(start_time,
+                                                                                       end_time,
+                                                                                       'AWS/Lambda',
+                                                                                       lambda_metric,
+                                                                                       ['Sum'],
+                                                                                       [{"Name": "FunctionName",
+                                                                                         "Value": ln}]))
+            stage_lambdas[ln][lambda_metric] = int(summation_from_datapoints_response(lambda_res))
+    return stage_lambdas
 
-def run(webhook: bool = None):
+def run(push_to_webhook:bool = None, webhook: str = None):
     if os.environ["DSS_INFRA_TAG_STAGE"] is None:
         raise ValueError('Missing DSS_INFRA_TAG_STAGE, exiting....')
         exit(1)
@@ -155,17 +124,7 @@ def run(webhook: bool = None):
     stages = {f'{os.environ["DSS_INFRA_TAG_STAGE"]}': collections.defaultdict(collections.defaultdict)}
 
     for stage in stages.keys():
-        stage_lambdas = {i: collections.defaultdict(collections.defaultdict) for i in get_lambda_names(stage)}
-        for ln in stage_lambdas.keys():
-            for lambda_metric in lambda_query_metric_names:
-                lambda_res = cloudwatch.get_metric_statistics(**get_cloudwatch_metric_stat(aws_start_time,
-                                                                                           aws_end_time,
-                                                                                           'AWS/Lambda',
-                                                                                           lambda_metric,
-                                                                                           ['Sum'],
-                                                                                           [{"Name": "FunctionName",
-                                                                                             "Value": ln}]))
-                stage_lambdas[ln][lambda_metric] = int(summation_from_datapoints_response(lambda_res))
+        stage_lambdas = get_lambda_metrics(aws_start_time, aws_end_time, lambda_query_metric_names)
         stages[stage]['lambdas'].update(stage_lambdas)
         for bucket_name in bucket_list:
             #  Fetch Data for Buckets Data Consumption
@@ -195,8 +154,10 @@ def run(webhook: bool = None):
         stages[stage]['bundles'].update(api_temp_dict)
 
     print(json.dumps(stages, indent=4, sort_keys=True))
-    if webhook:
-        send_slack_post(aws_start_time, aws_end_time, get_webhook_ssm(), stages)
+    if push_to_webhook:
+        if not webhook:
+            webhook = get_webhook_ssm()
+        send_slack_post(aws_start_time, aws_end_time, webhook, stages)
 
 
 if __name__ == '__main__':
