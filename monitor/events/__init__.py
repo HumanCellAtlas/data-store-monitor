@@ -2,14 +2,6 @@ import os
 import datetime
 from dcplib.aws.clients import cloudwatch  # noqa
 
-
-def ms_since_epoch(start_time=None):
-    """ :returns: returns datetime object of time since epoch"""
-    epoch = datetime.datetime.utcfromtimestamp(0)
-    if start_time is None:
-        start_time = datetime.datetime.utcnow()
-    return start_time - epoch
-
 def putMetrics(namespace: str = None, metric_name: str = None, timestamp=datetime.datetime.utcnow(),
                dimensions: dict = None, value=None):
     """ Adds metric to aws cloudwatch metrics using namespace"""
