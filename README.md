@@ -33,9 +33,9 @@ The DSS-Monitor can provide notifications for daily progress in a slack channel.
 ## Deployments:
 
 Once the appropriate service account config file has been saved according the instructions above, and there has been a
-webhook placed into the secrete manager, perform:
+webhook placed into the secret manager, perform:
 ```
-make deploy
+make deploy-chalice
 make refresh-all-stages
 ```
 to deploy the lambdas, and subscribe to the appropriate notifications in the DSS across all stages
