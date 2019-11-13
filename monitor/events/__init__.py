@@ -2,8 +2,7 @@ import os
 import datetime
 from dcplib.aws.clients import cloudwatch  # noqa
 
-def putMetrics(namespace: str = None, metric_name: str = None, timestamp=datetime.datetime.utcnow(),
-               dimensions: dict = None, value=None):
+def putMetrics(namespace: str, metric_name: str, dimensions: dict, value, timestamp=datetime.datetime.utcnow()):
     """ Adds metric to aws cloudwatch metrics using namespace"""
     assert dimensions is not None
     payload = {
