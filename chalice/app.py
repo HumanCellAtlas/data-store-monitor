@@ -14,7 +14,7 @@ from monitor import events
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-app = chalice.Chalice(app_name=f"dss-monitor-dev")
+app = chalice.Chalice(app_name=f"dss-monitor")
 app.log.setLevel(logging.DEBUG)
 
 
@@ -28,7 +28,7 @@ def index():
 @app.route('/notifications', methods=['POST'])
 def notification():
     notification_event = app.current_request.json_body  # todo verify HMAC key
-    stage = json.loads(notification_event).get('dss-api').split('.')[1]
+    stage = notification_event.get('dss_api').split('.')[1]
     logger.info(json.dumps(dict(stage=stage, event=notification_event)))
     event = events.aws_cloudwatch_metric(dss_notification=notification_event)
     event.upload_to_cloudwatch()
