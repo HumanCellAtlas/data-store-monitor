@@ -21,7 +21,9 @@ def delete_subscription(replica:str, uuid:str):
     return dss_client.delete_subscription(replica=replica, uuid=uuid)
 
 def create_subscription(replica:str, event_type:str, url:str):
-    return dss_client.put_subscription(replica=replica,jmespath_query=event_type,callback_url=url)
+    # see https://github.com/HumanCellAtlas/data-store/tree/master/daemons/dss-notify-v2 for more info 
+    jmespath_query = f'"event_type==`{event_type}`"'
+    return dss_client.put_subscription(replica=replica,jmespath_query=jmespath_query,callback_url=url)
 
 def get_api_gateway(gateway_name: str):
 
