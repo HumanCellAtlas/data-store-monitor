@@ -23,6 +23,16 @@ def load_template_file(template_path: str):
 class DCPMetricsDash:
     def __init__(self):
         self.current_dashboard = self.get_current_dashboard()
+        self.used_panel_ids = self.get_used_panel_ids()
+
+    def get_unused_panel_id(self):
+        ids = [x for x in range(100) if x not in self.get_used_panel_ids()]
+        for id in ids:
+            yield id
+
+    def get_used_panel_ids(self):
+        return [panel['id'] for panel in self.current_dashboard['panels']]
+
 
     def get_current_dashboard(self):
         dcp_monitor_dashboard_url = 'https://raw.githubusercontent.com/HumanCellAtlas/dcp-monitoring/master/terraform/'\
@@ -30,8 +40,21 @@ class DCPMetricsDash:
         resp = requests.get(url=dcp_monitor_dashboard_url)
         return json.loads(resp.text.split('EOF')[1])
 
+class DSSMetrics:
+    def __init__(self):
+        pass
 
-class LambdaMetrics:
+    def build_panel(self,filepath: str, metric_name: str, gridPos:dict, id:int, panel_title: str):
+        panel_template = load_template_file(bundle_panel_template_path)
+        targets = self._build_targets(metric_name)
+        for target in targets:
+            panel_template['targets'].append(target)
+        panel_template["title"] = panel_title
+        panel_template["gridPos"] = gridPos
+        panel_template['id'] = id
+        return panel_template
+
+class LambdaMetrics(DSSMetrics):
     def __init__(self):
 
         self.lambda_names = self._get_stripped_lambda_names()
@@ -68,21 +91,14 @@ class LambdaMetrics:
                                        "alias": lambda_name}
         return base_graphana_lambda_target
 
-    def _build_lambda_targets(self, metric_name:str):
+    def _build_targets(self, metric_name:str):
         targets = [self._get_formatted_graphana_target(lambda_name=f'{lambda_name}'+'-${var.env}',
                                                        metric_name=metric_name)
                    for lambda_name in self.lambda_names]
         return targets
 
-    def build_lambda_panel(self, metric_name: str):
-        panel_template = load_template_file(bundle_panel_template_path)
-        targets = self._build_lambda_targets(metric_name)
-        for target in targets:
-            panel_template['targets'].append(target)
-        panel_template["Title"] = f'Lambda {metric_name}'
-        return panel_template
 
-class BundleMetrics:
+class BundleMetrics(DSSMetrics):
     def __init__(self):
         self.refid = self.get_refid()
 
@@ -113,31 +129,39 @@ class BundleMetrics:
         }
         return target_template
 
-    def _build_bundle_targets(self):
+    def _build_targets(self, metric_name):
         """ Builds out bundle targets for consumption into terraform"""
         event_types = ["CREATE", "TOMBSTONE", "DELETE"]
         targets = [self._get_formatted_graphana_target(event_type=event,
-                                                       metric_name='bundles',
-                                                       namespace='${DSS-${var.env}')
+                                                       metric_name=metric_name,
+                                                       namespace='DSS-${upper(var.env)}')
                    for event in event_types]
         return targets
-
-    def build_bundle_panel(self) -> json:
-        panel_template = load_template_file(bundle_panel_template_path)
-        targets = self._build_bundle_targets()
-        for target in targets:
-            panel_template['targets'].append(target)
-        return panel_template
-
 
 
 if __name__ == '__main__':
     invocation_lambda_metrics = LambdaMetrics()
     duration_lambda_metrics = LambdaMetrics()
-    invocations = invocation_lambda_metrics.build_lambda_panel(metric_name="Invocations")
-    durations = duration_lambda_metrics.build_lambda_panel(metric_name="Duration")
-    bundle_metrics = BundleMetrics().build_bundle_panel()
-    dcp_metrics_dash = DCPMetricsDash().get_current_dashboard()
+    dcp_metrics = DCPMetricsDash()
+    invocations = invocation_lambda_metrics.build_panel(metric_name="Invocations",
+                                                        filepath=
+                                                        invocation_lambda_metrics.lambda_panel_template_path,
+                                                        gridPos={"h": 8, "w": 12, "x": 0, "y": 40},
+                                                        id=next(dcp_metrics.get_unused_panel_id()),
+                                                        panel_title="Lambda Invocations")
+
+    durations = duration_lambda_metrics.build_panel(metric_name="Duration",
+                                                    filepath=duration_lambda_metrics.lambda_panel_template_path,
+                                                    gridPos={"h": 8,"w": 12,"x": 12,"y": 40},
+                                                    id=next(dcp_metrics.get_unused_panel_id()),
+                                                    panel_title="Lambda Durations")
+
+    bundle_metrics = BundleMetrics().build_panel(metric_name =  'bundles',
+                                                 filepath=bundle_panel_template_path,
+                                                 gridPos={"h": 8,"w": 12,"x": 0,"y": 48},
+                                                 id=next(dcp_metrics.get_unused_panel_id()),
+                                                 panel_title='Bundle Events')
+    dcp_metrics_dash = dcp_metrics.get_current_dashboard()
 
     # Either Replace panel, where panel.Title == our panel Title, or just inject if its missing
     for inject_panel in [invocations,durations,bundle_metrics]:
