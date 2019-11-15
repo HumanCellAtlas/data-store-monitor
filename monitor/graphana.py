@@ -23,10 +23,10 @@ def load_template_file(template_path: str):
 class DCPMetricsDash:
     def __init__(self):
         self.current_dashboard = self.get_current_dashboard()
-        self.used_panel_ids = self.get_used_panel_ids()
+        self.unused_id = self.get_unused_panel_id()
 
     def get_unused_panel_id(self):
-        ids = [x for x in range(100) if x not in self.get_used_panel_ids()]
+        ids = [ x for x in range(100) if x not in self.get_used_panel_ids() ]
         for id in ids:
             yield id
 
@@ -42,7 +42,12 @@ class DCPMetricsDash:
 
 class DSSMetrics:
     def __init__(self):
-        pass
+        self.refid = self.get_refid()
+
+    def get_refid(self):
+        alpha_chars = [char for char in string.ascii_uppercase]
+        for char in cycle(alpha_chars):
+            yield char
 
     def build_panel(self,filepath: str, metric_name: str, gridPos:dict, id:int, panel_title: str):
         panel_template = load_template_file(bundle_panel_template_path)
@@ -99,13 +104,6 @@ class LambdaMetrics(DSSMetrics):
 
 
 class BundleMetrics(DSSMetrics):
-    def __init__(self):
-        self.refid = self.get_refid()
-
-    def get_refid(self):
-        alpha_chars = [char for char in string.ascii_uppercase]
-        for char in cycle(alpha_chars):
-            yield char
 
     def _get_formatted_graphana_target(self, event_type: str, metric_name: str, namespace: str):
         target_template = {
@@ -147,19 +145,19 @@ if __name__ == '__main__':
                                                         filepath=
                                                         invocation_lambda_metrics.lambda_panel_template_path,
                                                         gridPos={"h": 8, "w": 12, "x": 0, "y": 40},
-                                                        id=next(dcp_metrics.get_unused_panel_id()),
+                                                        id=next(dcp_metrics.unused_id),
                                                         panel_title="Lambda Invocations")
 
     durations = duration_lambda_metrics.build_panel(metric_name="Duration",
                                                     filepath=duration_lambda_metrics.lambda_panel_template_path,
                                                     gridPos={"h": 8,"w": 12,"x": 12,"y": 40},
-                                                    id=next(dcp_metrics.get_unused_panel_id()),
+                                                    id=next(dcp_metrics.unused_id),
                                                     panel_title="Lambda Durations")
 
     bundle_metrics = BundleMetrics().build_panel(metric_name =  'bundles',
                                                  filepath=bundle_panel_template_path,
                                                  gridPos={"h": 8,"w": 12,"x": 0,"y": 48},
-                                                 id=next(dcp_metrics.get_unused_panel_id()),
+                                                 id=next(dcp_metrics.unused_id),
                                                  panel_title='Bundle Events')
     dcp_metrics_dash = dcp_metrics.get_current_dashboard()
 
