@@ -3,15 +3,12 @@ import json
 import os
 import requests
 import string
-from itertools import cycle
-
+import argparse
 
 from monitor import get_lambda_names
 
 
 mon_home = os.getenv('DSS_MON_HOME')
-bundle_panel_template_path = mon_home+'/templates/graphana/bucket_panel_template.json'
-
 
 def load_template_file(template_path: str):
     """Loads JSON template to dict."""
@@ -19,6 +16,15 @@ def load_template_file(template_path: str):
         data = json.load(file)
     return data
 
+def format_panel_positioning(dashboard_src:dict, dashboard_dst: dict):
+    '''Use the dashboard_src to position panels correctly on the dashboard_dest'''
+    for panel in dashboard_dst['panels']:
+        source_panel = filter(lambda x: (x['title'] == panel['title']), dashboard_src.get('panel'))
+        if source_panel is not None:
+            panel["gridPos"] = source_panel['gridPos']
+        else:
+            print(f"Unable to locate source panel with title: {panel['title']}")
+    return dashboard_dst
 
 class DCPMetricsDash:
     def __init__(self):
@@ -40,17 +46,20 @@ class DCPMetricsDash:
         resp = requests.get(url=dcp_monitor_dashboard_url)
         return json.loads(resp.text.split('EOF')[1])
 
+    #TODO split that function above, inject a completed dashboard into the array, write objects to file. 
+
+
 class DSSMetrics:
     def __init__(self):
         self.refid = self.get_refid()
 
     def get_refid(self):
         alpha_chars = [char for char in string.ascii_uppercase]
-        for char in cycle(alpha_chars):
+        for char in alpha_chars:
             yield char
 
     def build_panel(self,filepath: str, metric_name: str, gridPos:dict, id:int, panel_title: str):
-        panel_template = load_template_file(bundle_panel_template_path)
+        panel_template = load_template_file(filepath)
         targets = self._build_targets(metric_name)
         for target in targets:
             panel_template['targets'].append(target)
@@ -68,7 +77,7 @@ class LambdaMetrics(DSSMetrics):
 
     def get_refid(self):
         alpha_chars = [char for char in string.ascii_uppercase]
-        for char in cycle(alpha_chars):
+        for char in alpha_chars:
             yield char
 
     def _get_stripped_lambda_names(self):
@@ -104,6 +113,7 @@ class LambdaMetrics(DSSMetrics):
 
 
 class BundleMetrics(DSSMetrics):
+    bundle_panel_template_path = mon_home+'/templates/graphana/bucket_panel_template.json'
 
     def _get_formatted_graphana_target(self, event_type: str, metric_name: str, namespace: str):
         target_template = {
@@ -136,37 +146,3 @@ class BundleMetrics(DSSMetrics):
                    for event in event_types]
         return targets
 
-
-if __name__ == '__main__':
-    invocation_lambda_metrics = LambdaMetrics()
-    duration_lambda_metrics = LambdaMetrics()
-    dcp_metrics = DCPMetricsDash()
-    invocations = invocation_lambda_metrics.build_panel(metric_name="Invocations",
-                                                        filepath=
-                                                        invocation_lambda_metrics.lambda_panel_template_path,
-                                                        gridPos={"h": 8, "w": 12, "x": 0, "y": 40},
-                                                        id=next(dcp_metrics.unused_id),
-                                                        panel_title="Lambda Invocations")
-
-    durations = duration_lambda_metrics.build_panel(metric_name="Duration",
-                                                    filepath=duration_lambda_metrics.lambda_panel_template_path,
-                                                    gridPos={"h": 8,"w": 12,"x": 12,"y": 40},
-                                                    id=next(dcp_metrics.unused_id),
-                                                    panel_title="Lambda Durations")
-
-    bundle_metrics = BundleMetrics().build_panel(metric_name =  'bundles',
-                                                 filepath=bundle_panel_template_path,
-                                                 gridPos={"h": 8,"w": 12,"x": 0,"y": 48},
-                                                 id=next(dcp_metrics.unused_id),
-                                                 panel_title='Bundle Events')
-    dcp_metrics_dash = dcp_metrics.get_current_dashboard()
-
-    # Either Replace panel, where panel.Title == our panel Title, or just inject if its missing
-    for inject_panel in [invocations,durations,bundle_metrics]:
-        for idx, panel in enumerate(dcp_metrics_dash["panels"]):
-            if panel["title"] == inject_panel["title"]:
-                dcp_metrics_dash['panels'][idx] = inject_panel
-                break
-        dcp_metrics_dash['panels'].append(inject_panel)
-
-    print(json.dumps(dcp_metrics_dash, indent=4))
