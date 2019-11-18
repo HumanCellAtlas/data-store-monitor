@@ -2,9 +2,6 @@ import os
 import datetime
 from dcplib.aws.clients import cloudwatch  # noqa
 
-event_types = ['CREATE', 'TOMBSTONE', 'DELETE']
-
-
 def putMetrics(namespace: str, metric_name: str, dimensions: dict, value, timestamp=datetime.datetime.utcnow()):
     """ Adds metric to aws cloudwatch metrics using namespace"""
     assert dimensions is not None
@@ -22,7 +19,6 @@ def putMetrics(namespace: str, metric_name: str, dimensions: dict, value, timest
 
 class aws_cloudwatch_metric:
     def __init__(self, dss_notification):
-        self.event_type = dss_notification.get("event_type")
         self.stage = dss_notification.get('dss_api').split('.')[1]
         self.namespace = f'dss-{self.stage}'.upper() # this was already established in DCP-Monitor
         self.metric_name = 'bundles'
@@ -37,4 +33,3 @@ class aws_cloudwatch_metric:
                           timestamp=self.timestamp,
                           dimensions=self.dimensions,
                           value=self.value)
-
