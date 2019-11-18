@@ -45,13 +45,13 @@ to deploy the lambdas, and subscribe to the appropriate notifications in the DSS
 The HCA DSS uses [dcp-monitoring](https://github.com/HumanCellAtlas/dcp-monitoring) to deploy and manage graphana dashboards.
 ('./scripts/generate_dss_dashboard.py')[] handles modification to the lambda metrics panels, and will format the panel to be used by the dcp-metrics repository.
 to create a new dashboard use:
-`./scripts/generate_dss_dashboard.py --dashboard --tf`
+`make generate-dashboard-tf`
 this formats the output into a file called dss-dashboard.tf which can be placed into [dcp-monitoring/../env-dashboards](https://github.com/HumanCellAtlas/dcp-monitoring/tree/master/terraform/modules/env-dashboards)
 
 ### Panel Formatting
 Panel placement in graphana can be challenging when dealing with templates, (./scripts/generate_dss_dashboard.py)[] also offers a way to map an existing dashboard to a new dashboard template.
 Start off by creating a dashboard in graphana, dont worry about populating the panels with data, just organize them.
 Within the graphana dashboard settings, copy over the source dashboard json to a file locally.
-`./scripts/generate_dss_dashboard.py --dashboard --tf --`
-
+`./scripts/generate_dss_dashboard.py --tf --position-dashboard {path-too-source-json} `
+This will build out new lambda-panes but take the grid positioning from the source dashboard that was provided. 
  
