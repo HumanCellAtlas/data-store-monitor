@@ -41,17 +41,11 @@ class DCPMetricsDash:
     def get_used_panel_ids(self):
         return [panel['id'] for panel in self.current_dashboard['panels']]
 
-
-    def request_template_from_dcp_metrics(self):
+    def get_current_dashboard(self):
         """returns the terraform managed dashboard for the DSS"""
         resp = requests.get(url=self.dcp_monitor_dashboard_url)
-        return resp.text.split('EOF')
+        return json.loads(resp.text.split('EOF')[1])
 
-    def get_current_dashboard(self):
-        resp = self.request_template_from_dcp_metrics()
-        return json.loads(resp[1])
-
-    #TODO split that function above, inject a completed dashboard into the array, write objects to file.
     def format_tf_templates(self, new_dashboard:dict ):
         dashboard = json.dumps(new_dashboard,indent=2)
         intro = 'locals {\n  dss_dashboard = <<EOF\n'
