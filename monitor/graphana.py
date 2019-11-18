@@ -28,6 +28,8 @@ def format_panel_positioning(dashboard_src:dict, dashboard_dst: dict):
 
 class DCPMetricsDash:
     def __init__(self):
+        self.dcp_monitor_dashboard_url = 'https://raw.githubusercontent.com/HumanCellAtlas/dcp-monitoring/' \
+                                         'master/terraform/modules/env-dashboards/dss-dashboard.tf'
         self.current_dashboard = self.get_current_dashboard()
         self.unused_id = self.get_unused_panel_id()
 
@@ -40,14 +42,21 @@ class DCPMetricsDash:
         return [panel['id'] for panel in self.current_dashboard['panels']]
 
 
+    def request_template_from_dcp_metrics(self):
+        """returns the terraform managed dashboard for the DSS"""
+        resp = requests.get(url=self.dcp_monitor_dashboard_url)
+        return resp.text.split('EOF')
+
     def get_current_dashboard(self):
-        dcp_monitor_dashboard_url = 'https://raw.githubusercontent.com/HumanCellAtlas/dcp-monitoring/master/terraform/'\
-                            'modules/env-dashboards/dss-dashboard.tf'
-        resp = requests.get(url=dcp_monitor_dashboard_url)
-        return json.loads(resp.text.split('EOF')[1])
+        resp = self.request_template_from_dcp_metrics()
+        return json.loads(resp[1])
 
-    #TODO split that function above, inject a completed dashboard into the array, write objects to file. 
-
+    #TODO split that function above, inject a completed dashboard into the array, write objects to file.
+    def format_tf_templates(self, new_dashboard:dict ):
+        dashboard = json.dumps(new_dashboard,indent=2)
+        intro = 'locals {\n  dss_dashboard = <<EOF\n'
+        tail = '\nEOF\n}\n'
+        return f'{intro}{dashboard}{tail}'
 
 class DSSMetrics:
     def __init__(self):

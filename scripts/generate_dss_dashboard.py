@@ -71,3 +71,10 @@ if __name__ == '__main__':
         dcp_metrics_dash = format_panel_positioning(dashboard_src, dashboard_dst)
     if args.print:
         print(json.dumps(dcp_metrics_dash, indent=4))
+    if args.tf:
+        dcp_manager = DCPMetricsDash()
+        outfile_name = 'dss-dashboard.tf'
+        dcp_metrics_dash = dcp_manager.format_tf_templates(dcp_metrics_dash)
+        with open(outfile_name, 'w') as outfile:
+            outfile.write(dcp_metrics_dash)
+        print(f'wrote dashboard to {outfile_name}\n')
