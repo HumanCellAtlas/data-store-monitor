@@ -34,3 +34,6 @@ refresh-all-stages:
 	$(MAKE) refresh-subs STAGE=integration
 	$(MAKE) refresh-subs STAGE=staging
 	$(MAKE) refresh-subs STAGE=prod
+
+gen-dashboard-tf:
+	./scripts/generate_dss_dashboard.py --tf

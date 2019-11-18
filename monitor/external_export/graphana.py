@@ -19,11 +19,12 @@ def load_template_file(template_path: str):
 def format_panel_positioning(dashboard_src:dict, dashboard_dst: dict):
     '''Use the dashboard_src to position panels correctly on the dashboard_dest'''
     for panel in dashboard_dst['panels']:
-        source_panel = filter(lambda x: (x['title'] == panel['title']), dashboard_src.get('panel'))
-        if source_panel is not None:
-            panel["gridPos"] = source_panel['gridPos']
-        else:
+        for source_panel in dashboard_src.get("panels"):
+            if panel['title'] == source_panel['title']:
+                panel["gridPos"] = source_panel['gridPos']
+                break
             print(f"Unable to locate source panel with title: {panel['title']}")
+        break
     return dashboard_dst
 
 class DCPMetricsDash:

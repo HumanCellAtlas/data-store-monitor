@@ -10,7 +10,8 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0,parentdir)
 
-from monitor.graphana import LambdaMetrics, BundleMetrics,DCPMetricsDash,format_panel_positioning, load_template_file
+from monitor.external_export.graphana import LambdaMetrics, BundleMetrics, DCPMetricsDash,\
+    format_panel_positioning, load_template_file
 
 
 
@@ -53,8 +54,7 @@ def build_dss_dashboard():
 parser = argparse.ArgumentParser()
 
 
-parser.add_argument("--position", help="Replaces gid positions with into a templated dashboard", action='store_true')
-parser.add_argument("--dashboard",help='Builds out dashboard', action='store_true')
+parser.add_argument("--position-dashboard", help="provide a source dashboard for positioning panels")
 parser.add_argument('--print',help='Prints dashboard to screen', action='store_true')
 parser.add_argument('--tf',help='saves dashboard to terraform file', action='store_true')
 
@@ -63,12 +63,11 @@ parser.add_argument('--tf',help='saves dashboard to terraform file', action='sto
 args = parser.parse_args()
 
 if __name__ == '__main__':
-    if args.dashboard:
-        dcp_metrics_dash = build_dss_dashboard()
-    elif args.position:
-        dashboard_src =  load_template_file(args[2])
-        dashboard_dst = load_template_file(args[3])
-        dcp_metrics_dash = format_panel_positioning(dashboard_src, dashboard_dst)
+
+    dcp_metrics_dash = build_dss_dashboard()
+    if args.position_dashboard:
+        dashboard_src = load_template_file(args.position_dashboard)
+        dcp_metrics_dash = format_panel_positioning(dashboard_src, dcp_metrics_dash)
     if args.print:
         print(json.dumps(dcp_metrics_dash, indent=4))
     if args.tf:
