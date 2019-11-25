@@ -19,12 +19,14 @@ def load_template_file(template_path: str):
 def format_panel_positioning(dashboard_src:dict, dashboard_dst: dict):
     '''Use the dashboard_src to position panels correctly on the dashboard_dest'''
     for panel in dashboard_dst['panels']:
+        hit = False
         for source_panel in dashboard_src.get("panels"):
             if panel['title'] == source_panel['title']:
                 panel["gridPos"] = source_panel['gridPos']
+                hit = True
                 break
+        if not hit:
             print(f"Unable to locate source panel with title: {panel['title']}")
-        break
     return dashboard_dst
 
 class DCPMetricsDash:
@@ -48,7 +50,7 @@ class DCPMetricsDash:
         return json.loads(resp.text.split('EOF')[1])
 
     def format_tf_templates(self, new_dashboard:dict ):
-        dashboard = json.dumps(new_dashboard,indent=2)
+        dashboard = json.dumps(new_dashboard,indent=4)
         intro = 'locals {\n  dss_dashboard = <<EOF\n'
         tail = '\nEOF\n}\n'
         return f'{intro}{dashboard}{tail}'
@@ -58,18 +60,17 @@ class DSSMetrics:
         self.refid = self.get_refid()
 
     def get_refid(self):
-        alpha_chars = [char for char in string.ascii_uppercase]
-        for char in alpha_chars:
+        for char in string.ascii_uppercase:
             yield char
 
-    def build_panel(self,filepath: str, metric_name: str, gridPos:dict, id:int, panel_title: str):
+    def build_panel(self,filepath: str, metric_name: str, gridPos:dict, panel_id:int, panel_title: str):
         panel_template = load_template_file(filepath)
         targets = self._build_targets(metric_name)
         for target in targets:
             panel_template['targets'].append(target)
         panel_template["title"] = panel_title
         panel_template["gridPos"] = gridPos
-        panel_template['id'] = id
+        panel_template['id'] = panel_id
         return panel_template
 
 class LambdaMetrics(DSSMetrics):
@@ -80,8 +81,7 @@ class LambdaMetrics(DSSMetrics):
         self.refid = self.get_refid()
 
     def get_refid(self):
-        alpha_chars = [char for char in string.ascii_uppercase]
-        for char in alpha_chars:
+        for char in string.ascii_uppercase:
             yield char
 
     def _get_stripped_lambda_names(self):
@@ -117,28 +117,24 @@ class LambdaMetrics(DSSMetrics):
 
 
 class BundleMetrics(DSSMetrics):
-    bundle_panel_template_path = mon_home+'/templates/graphana/bucket_panel_template.json'
+    bundle_panel_template_path = mon_home+'/templates/graphana/bundle_panel_template.json'
 
     def _get_formatted_graphana_target(self, event_type: str, metric_name: str, namespace: str):
-        target_template = {
-            "alias": event_type,
-            "dimensions": {
-                "operation": event_type
-            },
-            "expression": "",
-            "highResolution": False,
-            "id": "",
-            "metricName": metric_name,
-            "namespace": namespace,
-            "period": "",
-            "refId": f'{next(self.refid)}',
-            "region": "us-east-1",
-            "returnData": False,
-            "statistics": [
-                "Sum"
-            ]
-
-        }
+        target_template = {"alias": event_type,
+                           "dimensions": {
+                               "operation": event_type
+                           },
+                           "expression": "",
+                           "highResolution": False,
+                           "id": "",
+                           "metricName": metric_name,
+                           "namespace": namespace,
+                           "period": "",
+                           "refId": f'{next(self.refid)}',
+                           "region": "us-east-1",
+                           "returnData": False,
+                           "statistics": ["Sum"]
+                           }
         return target_template
 
     def _build_targets(self, metric_name):
@@ -150,3 +146,31 @@ class BundleMetrics(DSSMetrics):
                    for event in event_types]
         return targets
 
+
+class BucketMetrics(DSSMetrics):
+    bucket_panel_template_path = mon_home+"/templates/graphana/bucket_panel_template.json"
+
+    def _get_formatted_graphana_target(self,bucket_name, bucket_type):
+        target_template = {
+            "refId": f'{next(self.refid)}',
+            "namespace": "AWS/S3",
+            "metricName": "BucketSizeBytes",
+            "statistics": ["Sum"],
+            "dimensions": {
+                "StorageType": "StandardStorage",
+                "BucketName": bucket_name
+            },
+            "period": "86400",
+            "region": "default",
+            "id": "",
+            "expression": "",
+            "returnData": False,
+            "highResolution": False,
+            "alias": bucket_type
+        }
+
+    def _build_targets(self, metric_name):
+        buckets = [("Primary Bucket","${var.dss-bucket-${var.env}}"),
+                   ("Checkout Bucket","${var.dss-checkout-bucket-${var.env}}")]
+        targets = [self._get_formatted_graphana_target(bucket_name,bucket_type) for bucket_name, bucket_type in buckets]
+        return targets
