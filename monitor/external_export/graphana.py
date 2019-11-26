@@ -171,7 +171,7 @@ class BucketMetrics(DSSMetrics):
         return target_template
 
     def _build_targets(self, metric_name):
-        buckets = [("Primary Bucket","${var.dss-bucket-${var.env}}"),
-                   ("Checkout Bucket","${var.dss-checkout-bucket-${var.env}}")]
+        buckets = [("Primary Bucket","${local.dss_primary_bucket[local.env]}"),
+                   ("Checkout Bucket","${local.dss_checkout_bucket[local.env]}")]
         targets = [self._get_formatted_graphana_target(bucket_name,bucket_type,metric_name) for bucket_name, bucket_type in buckets]
         return targets
