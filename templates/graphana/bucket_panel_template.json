@@ -1,80 +1,80 @@
 {
-  "type": "graph",
-  "title": "Bucket Info",
+  "aliasColors": {},
+  "bars": true,
+  "dashLength": 10,
+  "dashes": false,
+  "datasource": "account-cloudwatch",
+  "fill": 1,
+  "fillGradient": 0,
   "gridPos": {
-    "x": 0,
-    "y": 0,
-    "w": 12,
-    "h": 8
+    "h": 8,
+    "w": 9,
+    "x": 5,
+    "y": 0
   },
-  "id": 22,
-  "datasource": "${var.aws_cloudwatch_data_source_name}",
-  "targets": [],
+  "id": 4,
+  "legend": {
+    "avg": false,
+    "current": true,
+    "max": false,
+    "min": false,
+    "show": true,
+    "total": false,
+    "values": true
+  },
+  "lines": false,
+  "linewidth": 1,
+  "nullPointMode": "null",
   "options": {
     "dataLinks": []
   },
+  "percentage": false,
+  "pointradius": 2,
+  "points": true,
   "renderer": "flot",
-  "yaxes": [
-    {
-      "label": null,
-      "show": true,
-      "logBase": 1,
-      "min": null,
-      "max": null,
-      "format": "bytes"
-    },
-    {
-      "label": null,
-      "show": true,
-      "logBase": 1,
-      "min": null,
-      "max": null,
-      "format": "short"
-    }
-  ],
+  "seriesOverrides": [],
+  "spaceLength": 10,
+  "stack": true,
+  "steppedLine": false,
+  "targets": [],
+  "thresholds": [],
+  "timeFrom": "7d",
+  "timeRegions": [],
+  "timeShift": null,
+  "title": "Bucket Info",
+  "tooltip": {
+    "shared": true,
+    "sort": 0,
+    "value_type": "individual"
+  },
+  "type": "graph",
   "xaxis": {
-    "show": true,
+    "buckets": null,
     "mode": "time",
     "name": null,
-    "values": [],
-    "buckets": null
+    "show": true,
+    "values": []
   },
+  "yaxes": [
+    {
+      "format": "bytes",
+      "label": null,
+      "logBase": 1,
+      "max": null,
+      "min": null,
+      "show": true
+    },
+    {
+      "format": "short",
+      "label": null,
+      "logBase": 1,
+      "max": null,
+      "min": null,
+      "show": true
+    }
+  ],
   "yaxis": {
     "align": false,
     "alignLevel": null
-  },
-  "lines": false,
-  "fill": 1,
-  "fillGradient": 0,
-  "linewidth": 1,
-  "dashes": false,
-  "dashLength": 10,
-  "spaceLength": 10,
-  "points": false,
-  "pointradius": 2,
-  "bars": true,
-  "stack": false,
-  "percentage": false,
-  "legend": {
-    "show": true,
-    "values": false,
-    "min": false,
-    "max": false,
-    "current": false,
-    "total": false,
-    "avg": false
-  },
-  "nullPointMode": "null",
-  "steppedLine": false,
-  "tooltip": {
-    "value_type": "individual",
-    "shared": true,
-    "sort": 0
-  },
-  "timeFrom": "7d",
-  "timeShift": null,
-  "aliasColors": {},
-  "seriesOverrides": [],
-  "thresholds": [],
-  "timeRegions": []
+  }
 }
