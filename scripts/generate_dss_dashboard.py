@@ -40,12 +40,11 @@ def build_dss_dashboard():
                                                 panel_id=next(dcp_metrics.unused_id),
                                                 panel_title='Bundle Events')
 
-    bucket_metrics = bucket_metrics.build_panel(metric_name="buckets",
+    bucket_metrics = bucket_metrics.build_panel(metric_name="BucketSizeBytes",
                                                 filepath=bucket_metrics.bucket_panel_template_path,
                                                 gridPos={"h": 8, "w": 12, "x": 0, "y": 48},
                                                 panel_id=next(dcp_metrics.unused_id),
                                                 panel_title="Bucket Info")
-
     dcp_metrics_dash = dcp_metrics.get_current_dashboard()
 
     # Either Replace panel, where panel.Title == our panel Title, or just inject if its missing
@@ -55,7 +54,6 @@ def build_dss_dashboard():
                 dcp_metrics_dash['panels'][idx] = inject_panel
                 break
         dcp_metrics_dash['panels'].append(inject_panel)
-
     return dcp_metrics_dash
 
 
