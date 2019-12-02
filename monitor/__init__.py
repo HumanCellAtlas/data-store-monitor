@@ -26,7 +26,8 @@ def get_webhook_ssm(secret_name=None):
 
 def get_dss_resource(resource_string: str, tag_filter: list):
     dss_resources = resourcegroupstaggingapi.get_resources(ResourceTypeFilters=[resource_string],
-                                                           TagFilters=tag_filter)
+                                                           TagFilters=tag_filter,
+                                                           ResourcesPerPage=100)
     return dss_resources
 
 
