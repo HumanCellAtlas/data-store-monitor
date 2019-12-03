@@ -3,7 +3,7 @@
   "bars": true,
   "dashLength": 10,
   "dashes": false,
-  "datasource": "account-cloudwatch",
+  "datasource": "${var.aws_cloudwatch_data_source_name}",
   "fill": 1,
   "fillGradient": 0,
   "gridPos": {
@@ -12,7 +12,7 @@
     "x": 5,
     "y": 0
   },
-  "id": 4,
+  "id": 12,
   "legend": {
     "avg": false,
     "current": true,
@@ -61,7 +61,7 @@
       "label": null,
       "logBase": 1,
       "max": null,
-      "min": null,
+      "min": "0",
       "show": true
     },
     {
@@ -69,7 +69,7 @@
       "label": null,
       "logBase": 1,
       "max": null,
-      "min": null,
+      "min": "0",
       "show": true
     }
   ],

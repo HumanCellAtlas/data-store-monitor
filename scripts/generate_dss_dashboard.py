@@ -24,36 +24,39 @@ def build_dss_dashboard():
     invocations = invocation_lambda_metrics.build_panel(metric_name="Invocations",
                                                         filepath=
                                                         invocation_lambda_metrics.lambda_panel_template_path,
-                                                        gridPos={"h": 8, "w": 12, "x": 0, "y": 40},
+                                                        gridPos={"h": 9, "w": 24, "x": 0, "y": 48},
                                                         panel_id=next(dcp_metrics.unused_id),
                                                         panel_title="Lambda Invocations")
 
     durations = duration_lambda_metrics.build_panel(metric_name="Duration",
                                                     filepath=duration_lambda_metrics.lambda_panel_template_path,
-                                                    gridPos={"h": 8, "w": 12, "x": 12, "y": 40},
+                                                    gridPos={"h": 9, "w": 24, "x": 0, "y": 57},
                                                     panel_id=next(dcp_metrics.unused_id),
                                                     panel_title="Lambda Durations")
 
     bundle_metrics = bundle_metrics.build_panel(metric_name='bundles',
                                                 filepath=bundle_metrics.bundle_panel_template_path,
-                                                gridPos={"h": 8, "w": 12, "x": 0, "y": 48},
+                                                gridPos={"h": 8, "w": 10, "x": 14, "y": 0},
                                                 panel_id=next(dcp_metrics.unused_id),
                                                 panel_title='Bundle Events')
 
     bucket_metrics = bucket_metrics.build_panel(metric_name="BucketSizeBytes",
                                                 filepath=bucket_metrics.bucket_panel_template_path,
-                                                gridPos={"h": 8, "w": 12, "x": 0, "y": 48},
+                                                gridPos={"h": 8, "w": 9, "x": 5, "y": 0},
                                                 panel_id=next(dcp_metrics.unused_id),
                                                 panel_title="Bucket Info")
     dcp_metrics_dash = dcp_metrics.get_current_dashboard()
 
     # Either Replace panel, where panel.Title == our panel Title, or just inject if its missing
     for inject_panel in [invocations, durations, bundle_metrics, bucket_metrics]:
+        found = False
         for idx, panel in enumerate(dcp_metrics_dash["panels"]):
             if panel["title"] == inject_panel["title"]:
                 dcp_metrics_dash['panels'][idx] = inject_panel
+                found = True
                 break
-        dcp_metrics_dash['panels'].append(inject_panel)
+        if not found:
+            dcp_metrics_dash['panels'].append(inject_panel)
     return dcp_metrics_dash
 
 
