@@ -51,7 +51,7 @@ pytz==2019.3              # via google-api-core
 pyyaml==5.1.2             # via awscli
 requests-oauthlib==1.3.0  # via google-auth-oauthlib
 requests==2.22.0
-rsa==3.4.2                # via awscli, google-auth
+rsa==4.7                # via awscli, google-auth
 s3transfer==0.2.1         # via awscli, boto3
 six==1.13.0               # via chalice, cryptography, google-api-core, google-auth, google-resumable-media, protobuf, python-dateutil, tenacity
 tenacity==5.0.4           # via hca
