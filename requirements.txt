@@ -57,7 +57,7 @@ six==1.13.0               # via chalice, cryptography, google-api-core, google-a
 tenacity==5.0.4           # via hca
 tqdm==4.38.0              # via hca
 tweak==1.0.3              # via hca
-urllib3==1.25.7           # via botocore, requests
+urllib3==1.26.5           # via botocore, requests
 wheel==0.33.6             # via chalice
 
 # The following packages are considered to be unsafe in a requirements file:
