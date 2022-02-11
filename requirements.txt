@@ -40,7 +40,7 @@ jsonpointer==1.14         # via hca
 jsonschema==2.6.0         # via hca
 markupsafe==1.1.1         # via jinja2
 oauthlib==3.1.0           # via requests-oauthlib
-protobuf==3.10.0          # via google-api-core, googleapis-common-protos
+protobuf==3.15.0          # via google-api-core, googleapis-common-protos
 puremagic==1.4            # via dcplib, hca
 pyasn1-modules==0.2.7     # via google-auth
 pyasn1==0.4.7             # via pyasn1-modules, rsa
