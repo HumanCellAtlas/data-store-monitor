@@ -58,7 +58,7 @@ tenacity==5.0.4           # via hca
 tqdm==4.38.0              # via hca
 tweak==1.0.3              # via hca
 urllib3==1.25.7           # via botocore, requests
-wheel==0.33.6             # via chalice
+wheel==0.38.1             # via chalice
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip==19.3.1               # via chalice
